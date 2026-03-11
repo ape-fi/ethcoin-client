@@ -9,6 +9,7 @@ interface EthcoinAPI {
   getNetworkStats: () => Promise<import('../shared/types').NetworkStats>
   getMiningHistory: () => Promise<import('../shared/types').MiningHistoryEntry[]>
   getSettings: () => Promise<import('../shared/types').Settings>
+  saveSettings: (settings: Partial<import('../shared/types').Settings>) => Promise<{ saved: boolean }>
   onMiningStatus: (callback: (status: import('../shared/types').MiningStatus) => void) => () => void
   onBalancesUpdate: (callback: (balances: import('../shared/types').Balances) => void) => () => void
   onNetworkStatsUpdate: (callback: (stats: import('../shared/types').NetworkStats) => void) => () => void

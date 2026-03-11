@@ -11,8 +11,6 @@ vi.mock('ethers', () => {
     totalMineCountOfBlock: vi.fn().mockResolvedValue(150n),
     selectedMinerOfBlock: vi.fn().mockResolvedValue('0x1234567890abcdef1234567890abcdef12345678'),
     balanceOf: vi.fn().mockResolvedValue(500000000000000000000n),
-    on: vi.fn(),
-    removeAllListeners: vi.fn(),
     interface: { getEvent: vi.fn() }
   }
   const mockProvider = {

@@ -13,10 +13,9 @@ describe('MiningEngine', () => {
   beforeEach(() => {
     testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ethcoin-mining-test-'))
     mockContract = {
-      on: vi.fn(),
-      removeAllListeners: vi.fn(),
       connect: vi.fn(),
-      blockNumber: vi.fn().mockResolvedValue(42n)
+      blockNumber: vi.fn().mockResolvedValue(42n),
+      selectedMinerOfBlock: vi.fn().mockResolvedValue('0x0000000000000000000000000000000000000000')
     }
     const mockTxResponse = {
       hash: '0xabc123',

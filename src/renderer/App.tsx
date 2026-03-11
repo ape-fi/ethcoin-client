@@ -5,6 +5,7 @@ import MiningStatus from './components/MiningStatus'
 import WalletInfo from './components/WalletInfo'
 import MiningHistory from './components/MiningHistory'
 import NetworkStats from './components/NetworkStats'
+import Settings from './components/Settings'
 import type { MiningHistoryEntry } from '../shared/types'
 
 export default function App() {
@@ -13,6 +14,7 @@ export default function App() {
   const { balances, refresh: refreshBalances } = useBalances()
   const { stats } = useNetworkStats()
   const [history, setHistory] = useState<MiningHistoryEntry[]>([])
+  const [showSettings, setShowSettings] = useState(false)
 
   // Refresh balances periodically when wallet is unlocked
   useEffect(() => {
@@ -39,11 +41,18 @@ export default function App() {
     )
   }
 
+  if (showSettings) {
+    return <Settings onBack={() => setShowSettings(false)} />
+  }
+
   return (
     <div className="app">
       <header className="app-header">
         <h1>Ethcoin Miner</h1>
-        <span className="address">{walletStatus.address?.slice(0, 6)}...{walletStatus.address?.slice(-4)}</span>
+        <div className="header-right">
+          <span className="address">{walletStatus.address?.slice(0, 6)}...{walletStatus.address?.slice(-4)}</span>
+          <button className="btn-settings" onClick={() => setShowSettings(true)}>Settings</button>
+        </div>
       </header>
       <div className="dashboard">
         <MiningStatus status={miningStatus} onStart={start} onStop={stop} />

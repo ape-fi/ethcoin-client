@@ -49,20 +49,7 @@ export class ChainService {
     return formatEther(balance)
   }
 
-  onNewBlock(callback: (blockNumber: number) => void): void {
-    this.contract.on('NewETHCBlock', (blockNumber: bigint) => {
-      callback(Number(blockNumber))
-    })
-  }
-
-  onMinerSelected(callback: (blockNumber: number, miner: string, reward: string) => void): void {
-    this.contract.on('MinerSelected', (blockNumber: bigint, miner: string, reward: bigint) => {
-      callback(Number(blockNumber), miner, formatEther(reward))
-    })
-  }
-
   destroy(): void {
-    this.contract.removeAllListeners()
     this.provider.destroy()
   }
 }

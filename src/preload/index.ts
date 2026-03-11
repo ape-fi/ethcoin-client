@@ -16,6 +16,7 @@ const api = {
   getNetworkStats: () => ipcRenderer.invoke('chain:stats'),
   getMiningHistory: () => ipcRenderer.invoke('mining:history'),
   getSettings: () => ipcRenderer.invoke('wallet:settings'),
+  saveSettings: (settings: any) => ipcRenderer.invoke('settings:save', settings),
 
   // Events from main → renderer
   onMiningStatus: (callback: (status: any) => void) => {

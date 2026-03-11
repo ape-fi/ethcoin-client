@@ -87,6 +87,21 @@ export function registerIpcHandlers(
     return loadSettings()
   })
 
+  ipcMain.handle('settings:save', (_event, newSettings: Partial<Settings>) => {
+    const settings = loadSettings()
+    if (newSettings.rpcUrl !== undefined) {
+      settings.rpcUrl = newSettings.rpcUrl
+      // Recreate chain service with new RPC
+      chainService?.destroy()
+      chainService = new ChainService(settings.rpcUrl)
+    }
+    if (newSettings.mineCount !== undefined) {
+      settings.mineCount = newSettings.mineCount
+    }
+    saveSettings(settings)
+    return { saved: true }
+  })
+
   // Mining handlers
   ipcMain.handle('mining:start', async (_event, mineCount: number) => {
     const wallet = walletManager.getWallet()
