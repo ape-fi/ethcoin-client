@@ -1,5 +1,7 @@
 import { app, BrowserWindow } from 'electron'
 import path from 'path'
+import { WalletManager } from './wallet-manager'
+import { registerIpcHandlers } from './ipc'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -23,7 +25,13 @@ function createWindow(): void {
   }
 }
 
-app.whenReady().then(createWindow)
+app.whenReady().then(() => {
+  const dataDir = app.getPath('userData')
+  const walletManager = new WalletManager(dataDir)
+
+  registerIpcHandlers(walletManager, dataDir, () => mainWindow)
+  createWindow()
+})
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
