@@ -1,3 +1,122 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0f0f; color: #e0e0e0; }
-.app { padding: 24px; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #0a0a0f;
+  color: #e0e0e0;
+}
+
+/* App Layout */
+.app { padding: 20px; max-width: 1100px; margin: 0 auto; }
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #1e1e2e;
+}
+
+.app-header h1 { font-size: 22px; color: #ffffff; }
+.app-header .address { font-size: 13px; color: #888; font-family: monospace; }
+
+.dashboard {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Panels */
+.panel {
+  background: #12121a;
+  border: 1px solid #1e1e2e;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.panel h2 { font-size: 15px; color: #888; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Status Indicator */
+.status-indicator { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; font-size: 18px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.dot.active { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+.dot.inactive { background: #666; }
+
+/* Stats */
+.stats { display: flex; flex-direction: column; gap: 10px; }
+.stat { display: flex; justify-content: space-between; }
+.stat .label { color: #888; font-size: 13px; }
+.stat .value { font-family: monospace; font-size: 14px; }
+.value.won { color: #22c55e; font-weight: bold; }
+.value.lost { color: #888; }
+.value.tx { color: #60a5fa; }
+
+/* Mine Count Slider */
+.mine-count-control { margin: 16px 0; }
+.mine-count-control label { display: block; margin-bottom: 8px; font-size: 13px; color: #aaa; }
+.mine-count-control input[type="range"] { width: 100%; }
+
+/* Buttons */
+button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  width: 100%;
+  transition: opacity 0.15s;
+}
+button:hover { opacity: 0.85; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-start { background: #22c55e; color: #000; }
+.btn-stop { background: #ef4444; color: #fff; }
+
+/* Wallet Info */
+.wallet-info .address { font-family: monospace; color: #60a5fa; margin-bottom: 12px; font-size: 14px; }
+.balances { display: flex; flex-direction: column; gap: 8px; }
+.balance { display: flex; justify-content: space-between; }
+.balance .label { color: #888; font-size: 13px; }
+.balance .value { font-family: monospace; font-size: 16px; }
+
+/* Mining History */
+.mining-history { grid-column: 1 / -1; }
+.empty { color: #555; font-size: 14px; }
+.history-list { display: flex; flex-direction: column; gap: 6px; max-height: 250px; overflow-y: auto; }
+.history-entry {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 12px; background: #1a1a25; border-radius: 8px; font-size: 13px;
+}
+.history-entry.won { border-left: 3px solid #22c55e; }
+.history-entry .block { font-family: monospace; color: #aaa; }
+.history-entry .tickets { color: #888; }
+.history-entry .result.won { color: #22c55e; font-weight: bold; }
+.history-entry .result.lost { color: #555; }
+.history-entry .time { color: #555; font-size: 12px; }
+
+/* Wallet Setup */
+.wallet-setup {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 100vh; padding: 40px; text-align: center;
+}
+.wallet-setup h1 { font-size: 32px; margin-bottom: 8px; }
+.wallet-setup .subtitle { color: #888; margin-bottom: 32px; }
+
+.setup-form { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 380px; }
+.setup-form input, .setup-form textarea {
+  padding: 12px; border: 1px solid #2a2a3a; border-radius: 8px;
+  background: #12121a; color: #e0e0e0; font-size: 14px; resize: none;
+}
+.setup-form input:focus, .setup-form textarea:focus { border-color: #60a5fa; outline: none; }
+.setup-form button { background: #60a5fa; color: #000; }
+
+.tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+.tabs button { background: #1a1a25; color: #888; flex: 1; }
+.tabs button.active { background: #60a5fa; color: #000; }
+.setup-tabs { width: 100%; max-width: 380px; }
+
+.link { color: #60a5fa; cursor: pointer; font-size: 13px; margin-top: 8px; }
+.link:hover { text-decoration: underline; }
+.error { color: #ef4444; font-size: 13px; margin-top: 12px; }
