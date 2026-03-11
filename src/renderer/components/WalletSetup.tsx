@@ -13,6 +13,8 @@ export default function WalletSetup({ walletExists, onCreate, onImport, onUnlock
   const [importKey, setImportKey] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [createdAddress, setCreatedAddress] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   const handleUnlock = async () => {
     setLoading(true)
@@ -29,7 +31,8 @@ export default function WalletSetup({ walletExists, onCreate, onImport, onUnlock
     }
     setLoading(true)
     setError('')
-    await onCreate(password)
+    const address = await onCreate(password)
+    setCreatedAddress(address)
     setLoading(false)
   }
 
@@ -46,6 +49,30 @@ export default function WalletSetup({ walletExists, onCreate, onImport, onUnlock
     setError('')
     await onImport(importKey.trim(), password)
     setLoading(false)
+  }
+
+  const copyAddress = async () => {
+    if (!createdAddress) return
+    await navigator.clipboard.writeText(createdAddress)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  if (createdAddress) {
+    return (
+      <div className="wallet-setup">
+        <h1>Wallet Created</h1>
+        <p className="subtitle">Send ETH to this address for gas fees, then start mining</p>
+        <div className="created-address-card">
+          <div className="created-address" onClick={copyAddress}>
+            {createdAddress}
+          </div>
+          <button onClick={copyAddress}>
+            {copied ? 'Copied!' : 'Copy Address'}
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (

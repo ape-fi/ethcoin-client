@@ -75,7 +75,11 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-stop { background: #ef4444; color: #fff; }
 
 /* Wallet Info */
-.wallet-info .address { font-family: monospace; color: #60a5fa; margin-bottom: 12px; font-size: 14px; }
+.wallet-info .address-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; cursor: pointer; }
+.wallet-info .address-row:hover .copy-hint { opacity: 1; }
+.wallet-info .address { font-family: monospace; color: #60a5fa; font-size: 14px; }
+.wallet-info .copy-hint { font-size: 11px; color: #555; opacity: 0; transition: opacity 0.15s; }
+.wallet-info .copy-hint { opacity: 0.6; }
 .balances { display: flex; flex-direction: column; gap: 8px; }
 .balance { display: flex; justify-content: space-between; }
 .balance .label { color: #888; font-size: 13px; }
@@ -120,3 +124,13 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .link { color: #60a5fa; cursor: pointer; font-size: 13px; margin-top: 8px; }
 .link:hover { text-decoration: underline; }
 .error { color: #ef4444; font-size: 13px; margin-top: 12px; }
+
+/* Created Address Card */
+.created-address-card { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 12px; }
+.created-address {
+  font-family: monospace; font-size: 14px; color: #60a5fa; word-break: break-all;
+  background: #12121a; border: 1px solid #2a2a3a; border-radius: 8px; padding: 16px;
+  cursor: pointer; text-align: center; user-select: all;
+}
+.created-address:hover { border-color: #60a5fa; }
+.created-address-card button { background: #60a5fa; color: #000; }
