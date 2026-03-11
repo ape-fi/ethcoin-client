@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import type { MiningStatus as MiningStatusType } from '../../shared/types'
-import { MIN_MINE_COUNT, MAX_MINE_COUNT } from '../../shared/constants'
+import { MAX_MINE_COUNT } from '../../shared/constants'
+
+const PRESET_POWERS = [1, 5, 10]
 
 interface Props {
   status: MiningStatusType | null
@@ -10,7 +12,28 @@ interface Props {
 
 export default function MiningStatus({ status, onStart, onStop }: Props) {
   const [mineCount, setMineCount] = useState(1)
+  const [customValue, setCustomValue] = useState('')
+  const [isCustom, setIsCustom] = useState(false)
   const running = status?.running ?? false
+
+  const selectPreset = (value: number) => {
+    setMineCount(value)
+    setIsCustom(false)
+    setCustomValue('')
+  }
+
+  const handleCustomChange = (input: string) => {
+    setCustomValue(input)
+    const num = parseInt(input, 10)
+    if (!isNaN(num) && num >= 1 && num <= MAX_MINE_COUNT) {
+      setMineCount(num)
+    }
+  }
+
+  const activateCustom = () => {
+    setIsCustom(true)
+    setCustomValue(PRESET_POWERS.includes(mineCount) ? '' : String(mineCount))
+  }
 
   return (
     <div className="panel mining-status">
@@ -44,16 +67,32 @@ export default function MiningStatus({ status, onStart, onStop }: Props) {
         </div>
       )}
 
-      <div className="mine-count-control">
-        <label>Tickets per block: {mineCount}</label>
-        <input
-          type="range"
-          min={MIN_MINE_COUNT}
-          max={MAX_MINE_COUNT}
-          value={mineCount}
-          onChange={(e) => setMineCount(Number(e.target.value))}
-          disabled={running}
-        />
+      <div className="mine-power-control">
+        <label>Mining Power: {mineCount}</label>
+        <div className="power-options">
+          {PRESET_POWERS.map((p) => (
+            <button
+              key={p}
+              className={`power-btn ${!isCustom && mineCount === p ? 'selected' : ''}`}
+              onClick={() => selectPreset(p)}
+              disabled={running}
+            >
+              {p}
+            </button>
+          ))}
+          <div className={`power-custom ${isCustom ? 'selected' : ''}`}>
+            <input
+              type="number"
+              placeholder="Custom"
+              min={1}
+              max={MAX_MINE_COUNT}
+              value={isCustom ? customValue : ''}
+              onFocus={activateCustom}
+              onChange={(e) => handleCustomChange(e.target.value)}
+              disabled={running}
+            />
+          </div>
+        </div>
       </div>
 
       <button

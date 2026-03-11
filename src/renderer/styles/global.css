@@ -52,10 +52,26 @@ body {
 .value.lost { color: #888; }
 .value.tx { color: #60a5fa; }
 
-/* Mine Count Slider */
-.mine-count-control { margin: 16px 0; }
-.mine-count-control label { display: block; margin-bottom: 8px; font-size: 13px; color: #aaa; }
-.mine-count-control input[type="range"] { width: 100%; }
+/* Mining Power Control */
+.mine-power-control { margin: 16px 0; }
+.mine-power-control label { display: block; margin-bottom: 8px; font-size: 13px; color: #aaa; }
+.power-options { display: flex; gap: 8px; }
+.power-btn {
+  flex: 1; padding: 8px; background: #1a1a25; color: #888; border: 1px solid #2a2a3a;
+  border-radius: 8px; font-size: 14px; font-weight: 600; width: auto;
+}
+.power-btn.selected { background: #60a5fa; color: #000; border-color: #60a5fa; }
+.power-btn:disabled { opacity: 0.5; }
+.power-custom {
+  flex: 1; border: 1px solid #2a2a3a; border-radius: 8px; overflow: hidden;
+}
+.power-custom.selected { border-color: #60a5fa; }
+.power-custom input {
+  width: 100%; padding: 8px; background: #1a1a25; color: #e0e0e0; border: none;
+  font-size: 14px; text-align: center; outline: none;
+}
+.power-custom input::placeholder { color: #555; }
+.power-custom input:disabled { opacity: 0.5; }
 
 /* Buttons */
 button {

@@ -22,7 +22,7 @@ export default function NetworkStats({ stats }: Props) {
           <span className="value">#{stats.currentBlock}</span>
         </div>
         <div className="stat">
-          <span className="label">Tickets in Block</span>
+          <span className="label">Mining Power in Block</span>
           <span className="value">{stats.totalTicketsInBlock}</span>
         </div>
         <div className="stat">

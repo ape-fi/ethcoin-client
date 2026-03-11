@@ -15,7 +15,7 @@ export default function MiningHistory({ history }: Props) {
           {history.map((entry) => (
             <div key={entry.txHash} className={`history-entry ${entry.won ? 'won' : ''}`}>
               <span className="block">#{entry.blockNumber}</span>
-              <span className="tickets">{entry.mineCount} tickets</span>
+              <span className="tickets">Power: {entry.mineCount}</span>
               <span className={`result ${entry.won ? 'won' : 'lost'}`}>
                 {entry.won ? `Won ${entry.reward} ETHC` : 'Not selected'}
               </span>
