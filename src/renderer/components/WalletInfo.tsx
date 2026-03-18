@@ -4,15 +4,75 @@ import type { Balances } from '../../shared/types'
 interface Props {
   address: string
   balances: Balances
+  onBalancesRefresh: () => void
 }
 
-export default function WalletInfo({ address, balances }: Props) {
+type SendToken = 'ETH' | 'ETHC'
+
+export default function WalletInfo({ address, balances, onBalancesRefresh }: Props) {
   const [copied, setCopied] = useState(false)
+  const [sendToken, setSendToken] = useState<SendToken | null>(null)
+  const [sendTo, setSendTo] = useState('')
+  const [sendAmount, setSendAmount] = useState('')
+  const [sending, setSending] = useState(false)
+  const [sendError, setSendError] = useState('')
+  const [sendSuccess, setSendSuccess] = useState('')
 
   const copyAddress = async () => {
     await navigator.clipboard.writeText(address)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const openSend = (token: SendToken) => {
+    setSendToken(token)
+    setSendTo('')
+    setSendAmount('')
+    setSendError('')
+    setSendSuccess('')
+  }
+
+  const closeSend = () => {
+    setSendToken(null)
+    setSendTo('')
+    setSendAmount('')
+    setSendError('')
+    setSendSuccess('')
+  }
+
+  const handleSend = async () => {
+    if (!sendToken || !sendTo || !sendAmount) return
+    setSending(true)
+    setSendError('')
+    setSendSuccess('')
+    try {
+      const result = sendToken === 'ETH'
+        ? await window.ethcoinAPI.sendEth(sendTo, sendAmount)
+        : await window.ethcoinAPI.sendEthc(sendTo, sendAmount)
+      if (result.error) {
+        setSendError(result.error)
+      } else {
+        setSendSuccess(`Sent! TX: ${result.txHash!.slice(0, 10)}...`)
+        onBalancesRefresh()
+      }
+    } catch (err: any) {
+      setSendError(err.message)
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const [maxEthLoading, setMaxEthLoading] = useState(false)
+
+  const handleMax = async () => {
+    if (sendToken === 'ETHC') {
+      setSendAmount(balances.ethc)
+    } else {
+      setMaxEthLoading(true)
+      const { max } = await window.ethcoinAPI.getMaxEth()
+      setSendAmount(max)
+      setMaxEthLoading(false)
+    }
   }
 
   return (
@@ -25,13 +85,67 @@ export default function WalletInfo({ address, balances }: Props) {
       <div className="balances">
         <div className="balance">
           <span className="label">ETH (gas)</span>
-          <span className="value">{parseFloat(balances.eth).toFixed(4)}</span>
+          <div className="balance-right">
+            <span className="value">{parseFloat(balances.eth).toFixed(4)}</span>
+            <button className="btn-send" onClick={() => openSend('ETH')}>Send</button>
+          </div>
         </div>
         <div className="balance">
           <span className="label">ETHC</span>
-          <span className="value">{parseFloat(balances.ethc).toFixed(2)}</span>
+          <div className="balance-right">
+            <span className="value">{parseFloat(balances.ethc).toFixed(2)}</span>
+            <button className="btn-send" onClick={() => openSend('ETHC')}>Send</button>
+          </div>
         </div>
       </div>
+
+      {sendToken && (
+        <div className="modal-overlay" onClick={closeSend}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Send {sendToken}</h2>
+              <button className="modal-close" onClick={closeSend}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <input
+                type="text"
+                placeholder="Recipient address (0x...)"
+                value={sendTo}
+                onChange={(e) => setSendTo(e.target.value)}
+                disabled={sending}
+              />
+              <div className="amount-input-row">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Amount"
+                  value={sendAmount}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/[^0-9.]/g, '')
+                    setSendAmount(v)
+                  }}
+                  disabled={sending}
+                />
+                <button
+                  className="btn-max"
+                  onClick={handleMax}
+                  disabled={sending || maxEthLoading}
+                >
+                  {maxEthLoading ? '...' : 'Max'}
+                </button>
+              </div>
+              {sendError && <p className="error">{sendError}</p>}
+              {sendSuccess && <p className="success">{sendSuccess}</p>}
+              <button
+                onClick={handleSend}
+                disabled={sending || !sendTo || !sendAmount}
+              >
+                {sending ? 'Sending...' : `Send ${sendToken}`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

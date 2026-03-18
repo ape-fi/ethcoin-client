@@ -3,25 +3,38 @@ import { ChainService } from '../chain-service'
 
 // Mock ethers
 vi.mock('ethers', () => {
-  const mockContract = {
+  const mockEthcoinContract = {
     blockNumber: vi.fn().mockResolvedValue(42n),
-    miningReward: vi.fn().mockResolvedValue(200000000000000000000n),
     lastBlockTime: vi.fn().mockResolvedValue(1700000000n),
-    nextHalvingBlock: vi.fn().mockResolvedValue(10080n),
     totalMineCountOfBlock: vi.fn().mockResolvedValue(150n),
-    selectedMinerOfBlock: vi.fn().mockResolvedValue('0x1234567890abcdef1234567890abcdef12345678'),
-    balanceOf: vi.fn().mockResolvedValue(500000000000000000000n),
     interface: { getEvent: vi.fn() }
   }
+  const mockLensContract = {
+    getNetworkStats: vi.fn().mockResolvedValue([
+      200000000000000000000n,     // miningReward
+      42n,                         // blockNumber
+      150n,                        // totalMiningPower
+      3810000000000000000000000n,  // totalSupply
+      10000000000000000000000000n, // maxSupply
+      10080n                       // nextHalvingBlock
+    ]),
+    getUserBalance: vi.fn().mockResolvedValue({
+      ethBalance: 1000000000000000000n,
+      ethcBalance: 500000000000000000000n
+    })
+  }
   const mockProvider = {
-    getBalance: vi.fn().mockResolvedValue(1000000000000000000n),
     destroy: vi.fn()
   }
+  let contractCallCount = 0
   return {
     JsonRpcProvider: vi.fn(() => mockProvider),
-    Contract: vi.fn(() => mockContract),
+    Contract: vi.fn(() => {
+      contractCallCount++
+      return contractCallCount % 2 === 1 ? mockEthcoinContract : mockLensContract
+    }),
     formatEther: vi.fn((val: bigint) => (Number(val) / 1e18).toString()),
-    formatUnits: vi.fn((val: bigint, decimals: number) => (Number(val) / 10 ** decimals).toString())
+    Network: { from: vi.fn(() => ({ name: 'mainnet', chainId: 1n })) }
   }
 })
 
@@ -32,20 +45,18 @@ describe('ChainService', () => {
     service = new ChainService('https://eth.llamarpc.com')
   })
 
-  it('should get network stats', async () => {
+  it('should get network stats via lens', async () => {
     const stats = await service.getNetworkStats()
-    expect(stats.currentBlock).toBe(42)
+    expect(stats.currentBlock).toBe(43)
     expect(stats.miningReward).toBe('200')
-    expect(stats.nextHalvingBlock).toBe(10080)
+    expect(stats.nextHalvingBlock).toBe(10080 - 43)
+    expect(stats.totalTicketsInBlock).toBe(150)
+    expect(stats.supplyPercent).toBe(38.1)
   })
 
-  it('should get ETHC balance', async () => {
-    const balance = await service.getEthcBalance('0xabc')
-    expect(balance).toBe('500')
-  })
-
-  it('should get ETH balance', async () => {
-    const balance = await service.getEthBalance('0xabc')
-    expect(balance).toBe('1')
+  it('should get user balances via lens', async () => {
+    const balances = await service.getUserBalances('0xabc')
+    expect(balances.eth).toBe('1')
+    expect(balances.ethc).toBe('500')
   })
 })

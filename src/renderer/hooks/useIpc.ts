@@ -48,36 +48,44 @@ export function useMining() {
   return { miningStatus, start, stop }
 }
 
-export function useBalances() {
+export function useBalances(enabled: boolean) {
   const [balances, setBalances] = useState<Balances>({ eth: '0', ethc: '0' })
 
   const refresh = useCallback(async () => {
-    const b = await api.getBalances()
-    setBalances(b)
+    try {
+      const b = await api.getBalances()
+      setBalances(b)
+    } catch { /* ignore */ }
   }, [])
 
   useEffect(() => {
+    if (!enabled) return
     refresh()
+    const interval = setInterval(refresh, 30_000)
     const unsubscribe = api.onBalancesUpdate(setBalances)
-    return unsubscribe
-  }, [refresh])
+    return () => { clearInterval(interval); unsubscribe(); }
+  }, [enabled, refresh])
 
   return { balances, refresh }
 }
 
-export function useNetworkStats() {
+export function useNetworkStats(enabled: boolean) {
   const [stats, setStats] = useState<NetworkStats | null>(null)
 
   const refresh = useCallback(async () => {
-    const s = await api.getNetworkStats()
-    setStats(s)
+    try {
+      const s = await api.getNetworkStats()
+      if (s) setStats(s)
+    } catch { /* ignore */ }
   }, [])
 
   useEffect(() => {
+    if (!enabled) return
     refresh()
+    const interval = setInterval(refresh, 30_000)
     const unsubscribe = api.onNetworkStatsUpdate(setStats)
-    return unsubscribe
-  }, [refresh])
+    return () => { clearInterval(interval); unsubscribe(); }
+  }, [enabled, refresh])
 
   return { stats, refresh }
 }

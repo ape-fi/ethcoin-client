@@ -1,6 +1,5 @@
-import { Contract, Wallet, formatEther } from 'ethers'
-import fs from 'fs'
-import path from 'path'
+import { Contract, Wallet, JsonRpcProvider, formatEther } from 'ethers'
+import * as Sentry from '@sentry/electron/main'
 import type { MiningResult, MiningStatus } from '../shared/types'
 
 type StatusCallback = (status: MiningStatus) => void
@@ -8,38 +7,29 @@ type StatusCallback = (status: MiningStatus) => void
 export class MiningEngine {
   private contract: Contract
   private signer: Wallet
-  private dataDir: string
+  private provider: JsonRpcProvider
   private running = false
   private mineCount = 1
+  private maxGasGwei = 20
   private statusCallback: StatusCallback | null = null
   private resultHistory: MiningResult[] = []
   private pendingTx: string | null = null
   private pollTimer: ReturnType<typeof setInterval> | null = null
   private lastSeenBlock = -1
+  private lastMinedBlock = -1
   private mining = false
+  private gasTooHigh: string | null = null
+  private error: string | null = null
 
-  constructor(contract: Contract, signer: Wallet, dataDir: string) {
+  constructor(contract: Contract, signer: Wallet, provider: JsonRpcProvider) {
     this.contract = contract
     this.signer = signer
-    this.dataDir = dataDir
-    this.loadHistory()
+    this.provider = provider
   }
 
-  private get historyPath(): string {
-    return path.join(this.dataDir, 'history.json')
-  }
-
-  private loadHistory(): void {
-    try {
-      const data = fs.readFileSync(this.historyPath, 'utf-8')
-      this.resultHistory = JSON.parse(data)
-    } catch {
-      this.resultHistory = []
-    }
-  }
-
-  private saveHistory(): void {
-    fs.writeFileSync(this.historyPath, JSON.stringify(this.resultHistory, null, 2))
+  /** contract.blockNumber() returns last concluded block. Active block = that + 1. */
+  private async getActiveBlock(): Promise<number> {
+    return Number(await this.contract.blockNumber()) + 1
   }
 
   isRunning(): boolean {
@@ -50,46 +40,101 @@ export class MiningEngine {
     this.statusCallback = callback
   }
 
-  getHistory(): MiningResult[] {
-    return [...this.resultHistory]
-  }
-
   async mineOnce(mineCount: number): Promise<MiningResult> {
     const connectedContract = this.contract.connect(this.signer) as any
-    const currentBlock = Number(await this.contract.blockNumber())
 
+    const activeBlock = await this.getActiveBlock()
     this.pendingTx = null
-    this.emitStatus(currentBlock)
+    this.emitStatus(activeBlock)
 
-    const tx = await connectedContract.mine(mineCount)
+    // Estimate gas and add 30% buffer — mine() gas usage varies
+    // depending on whether it triggers a block conclusion
+    const estimated = await connectedContract.mine.estimateGas(mineCount)
+    const gasLimit = (estimated * 130n) / 100n
+
+    const tx = await connectedContract.mine(mineCount, { gasLimit })
     this.pendingTx = tx.hash
-    this.emitStatus(currentBlock)
+    this.emitStatus(activeBlock)
 
-    await tx.wait()
+    // Wait up to 3 minutes for confirmation, then treat as dropped
+    const receipt = await Promise.race([
+      tx.wait(),
+      new Promise<null>((_, reject) =>
+        setTimeout(() => reject(new Error('Transaction timed out — likely dropped from mempool')), 180_000)
+      )
+    ])
     this.pendingTx = null
+
+    // Parse the Mine event from receipt to get the exact block we entered
+    let enteredBlock = activeBlock
+    if (receipt) {
+      for (const log of receipt.logs) {
+        try {
+          const parsed = this.contract.interface.parseLog({
+            topics: log.topics as string[],
+            data: log.data
+          })
+          if (parsed?.name === 'Mine') {
+            enteredBlock = Number(parsed.args[0])
+            break
+          }
+        } catch { /* not our event */ }
+      }
+    }
+
+    // Calculate gas cost from receipt
+    let gasCostEth: string | null = null
+    if (receipt) {
+      const gasUsed = receipt.gasUsed ?? 0n
+      const effectiveGasPrice = receipt.gasPrice ?? 0n
+      gasCostEth = formatEther(gasUsed * effectiveGasPrice)
+    }
 
     const result: MiningResult = {
-      blockNumber: currentBlock,
+      blockNumber: enteredBlock,
       txHash: tx.hash,
       mineCount,
       won: false,
-      reward: null,
+      gasCostEth,
       timestamp: Date.now()
     }
 
     this.resultHistory.unshift(result)
     if (this.resultHistory.length > 100) this.resultHistory.pop()
-    this.saveHistory()
 
-    this.emitStatus(currentBlock)
+    this.emitStatus(enteredBlock)
     return result
+  }
+
+  setMineCount(mineCount: number): void {
+    this.mineCount = mineCount
+  }
+
+  setMaxGasGwei(gwei: number): void {
+    this.maxGasGwei = gwei
+  }
+
+  private async checkGasPrice(): Promise<boolean> {
+    const feeData = await this.provider.getFeeData()
+    const gasPriceWei = feeData.gasPrice ?? 0n
+    const gasPriceGwei = Number(gasPriceWei) / 1e9
+    if (gasPriceGwei > this.maxGasGwei) {
+      this.gasTooHigh = `Gas too high (${gasPriceGwei.toFixed(1)} > ${this.maxGasGwei} Gwei limit)`
+      return false
+    }
+    this.gasTooHigh = null
+    return true
   }
 
   start(mineCount: number): void {
     this.mineCount = mineCount
     this.running = true
+    this.error = null
     this.lastSeenBlock = -1
-    this.startPolling()
+    this.lastMinedBlock = -1
+    this.emitStatus(0)
+    this.pollTimer = setInterval(() => this.pollCycle(), 12_000)
+    this.pollCycle()
   }
 
   stop(): void {
@@ -98,67 +143,88 @@ export class MiningEngine {
       clearInterval(this.pollTimer)
       this.pollTimer = null
     }
+    this.emitStatus(this.lastSeenBlock > 0 ? this.lastSeenBlock : 0)
   }
 
-  private startPolling(): void {
-    // Poll every 10 seconds for new blocks and winner results
-    this.pollTimer = setInterval(() => this.pollCycle(), 10_000)
-    // Run immediately
-    this.pollCycle()
+  pause(): void {
+    if (this.pollTimer) {
+      clearInterval(this.pollTimer)
+      this.pollTimer = null
+    }
+  }
+
+  resume(): void {
+    if (this.running && !this.pollTimer) {
+      this.pollTimer = setInterval(() => this.pollCycle(), 12_000)
+    }
   }
 
   private async pollCycle(): Promise<void> {
     if (!this.running) return
     try {
-      const currentBlock = Number(await this.contract.blockNumber())
+      const [activeBlock, lastBlockTime] = await Promise.all([
+        this.getActiveBlock(),
+        this.contract.lastBlockTime().then(Number)
+      ])
 
-      // Check for winners on previous blocks we participated in
-      await this.checkPendingWinners()
-
-      // Detect new block
+      // First poll — just record current active block
       if (this.lastSeenBlock === -1) {
-        this.lastSeenBlock = currentBlock
-        this.emitStatus(currentBlock)
+        this.lastSeenBlock = activeBlock
+        this.emitStatus(activeBlock)
         return
       }
 
-      if (currentBlock > this.lastSeenBlock && !this.mining) {
-        this.lastSeenBlock = currentBlock
+      const isNewBlock = activeBlock > this.lastMinedBlock
+      const blockExpired = Math.floor(Date.now() / 1000) > lastBlockTime + 60
+      const alreadyMinedThisBlock = this.lastMinedBlock === activeBlock
+
+      if (!this.mining && (isNewBlock || (alreadyMinedThisBlock && blockExpired))) {
+        // Check gas price before mining
+        const gasOk = await this.checkGasPrice()
+        if (!gasOk) {
+          this.lastSeenBlock = activeBlock
+          this.emitStatus(activeBlock)
+          return
+        }
+
+        this.lastSeenBlock = activeBlock
         this.mining = true
         try {
-          await this.mineOnce(this.mineCount)
-        } catch (error) {
-          console.error('Mining failed for block', currentBlock, error)
+          let power = this.mineCount
+          if (alreadyMinedThisBlock && blockExpired) {
+            // Block expired, we already mined into it. Check if we're the only miner.
+            const totalPower = Number(await this.contract.totalMineCountOfBlock(activeBlock))
+            const ourEntry = this.resultHistory.find(r => r.blockNumber === activeBlock)
+            const ourPower = ourEntry?.mineCount ?? 0
+            power = totalPower === ourPower ? 1 : this.mineCount
+          }
+          await this.mineOnce(power)
+          this.error = null
+          const newActiveBlock = await this.getActiveBlock()
+          this.lastMinedBlock = newActiveBlock
+          this.lastSeenBlock = newActiveBlock
+        } catch (error: any) {
+          this.pendingTx = null
+          const msg = error?.message ?? String(error)
+          if (msg.includes('insufficient funds') || msg.includes('INSUFFICIENT_FUNDS')) {
+            this.error = 'Insufficient ETH for gas — deposit ETH and restart'
+            this.emitStatus(activeBlock)
+            this.stop()
+            return
+          }
+          // Transient errors — report to Sentry, will retry next poll
+          Sentry.captureException(error)
+          this.error = null
+          this.emitStatus(activeBlock)
         } finally {
           this.mining = false
         }
+      } else {
+        this.lastSeenBlock = activeBlock
+        this.emitStatus(activeBlock)
       }
     } catch (error) {
-      console.error('Poll cycle error:', error)
-    }
-  }
-
-  private async checkPendingWinners(): Promise<void> {
-    const pending = this.resultHistory.filter(r => !r.won && r.reward === null)
-    for (const entry of pending) {
-      try {
-        const selectedMiner = await this.contract.selectedMinerOfBlock(entry.blockNumber)
-        // Zero address means block hasn't concluded yet
-        if (selectedMiner === '0x0000000000000000000000000000000000000000') continue
-
-        const won = selectedMiner.toLowerCase() === this.signer.address.toLowerCase()
-        entry.won = won
-        if (won) {
-          // Read the mining reward that was active for that block
-          entry.reward = 'yes'
-        } else {
-          entry.reward = 'no'
-        }
-        this.saveHistory()
-        this.emitStatus(entry.blockNumber)
-      } catch {
-        // ignore — will retry next cycle
-      }
+      Sentry.captureException(error)
     }
   }
 
@@ -170,7 +236,9 @@ export class MiningEngine {
       currentBlock,
       lastBlockTime: Date.now(),
       pendingTx: this.pendingTx,
-      lastResult: this.resultHistory[0] ?? null
+      lastResult: this.resultHistory[0] ?? null,
+      gasTooHigh: this.gasTooHigh,
+      error: this.error
     })
   }
 }

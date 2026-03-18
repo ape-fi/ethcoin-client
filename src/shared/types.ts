@@ -16,6 +16,8 @@ export interface MiningStatus {
   lastBlockTime: number
   pendingTx: string | null
   lastResult: MiningResult | null
+  gasTooHigh: string | null
+  error: string | null
 }
 
 export interface MiningResult {
@@ -23,7 +25,7 @@ export interface MiningResult {
   txHash: string
   mineCount: number
   won: boolean
-  reward: string | null
+  gasCostEth?: string | null
   timestamp: number
 }
 
@@ -32,19 +34,27 @@ export interface NetworkStats {
   miningReward: string
   totalTicketsInBlock: number
   nextHalvingBlock: number
-  lastBlockTime: number
+  supplyPercent: number
 }
 
 export interface MiningHistoryEntry {
   blockNumber: number
-  txHash: string
   mineCount: number
-  won: boolean
-  reward: string | null
+  totalCount: number
+  prob: number
+  won: boolean | null
   timestamp: number
+}
+
+export interface MiningStats {
+  blocksMined: number
+  totalPower: number
+  wins: number
+  ethcMined: string
 }
 
 export interface Settings {
   mineCount: number
   rpcUrl: string
+  maxGasGwei: number
 }

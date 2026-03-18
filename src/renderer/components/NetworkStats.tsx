@@ -7,8 +7,6 @@ interface Props {
 export default function NetworkStats({ stats }: Props) {
   if (!stats) return <div className="panel network-stats"><h2>Network</h2><p>Loading...</p></div>
 
-  const blocksToHalving = stats.nextHalvingBlock - stats.currentBlock
-
   return (
     <div className="panel network-stats">
       <h2>Network</h2>
@@ -26,8 +24,12 @@ export default function NetworkStats({ stats }: Props) {
           <span className="value">{stats.totalTicketsInBlock}</span>
         </div>
         <div className="stat">
-          <span className="label">Next Halving</span>
-          <span className="value">{blocksToHalving} blocks</span>
+          <span className="label">ETHC Mined</span>
+          <span className="value">{stats.supplyPercent.toFixed(2)}%</span>
+        </div>
+        <div className="stat">
+          <span className="label">Next Halving in</span>
+          <span className="value">{stats.nextHalvingBlock} blocks</span>
         </div>
       </div>
     </div>

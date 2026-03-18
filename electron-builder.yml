@@ -5,8 +5,14 @@ directories:
   output: dist
 files:
   - out/**/*
+publish:
+  provider: github
+  owner: bamtheape
+  repo: ethcoin-client
 mac:
-  target: dmg
+  target:
+    - dmg
+    - zip
   category: public.app-category.finance
 win:
   target: nsis

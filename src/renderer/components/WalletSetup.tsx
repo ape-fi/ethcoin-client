@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface Props {
   walletExists: boolean
@@ -10,11 +10,17 @@ interface Props {
 export default function WalletSetup({ walletExists, onCreate, onImport, onUnlock }: Props) {
   const [mode, setMode] = useState<'unlock' | 'create' | 'import'>(walletExists ? 'unlock' : 'create')
   const [password, setPassword] = useState('')
+
+  // Sync mode when walletExists changes (e.g. after async status fetch)
+  useEffect(() => {
+    if (walletExists) setMode('unlock')
+  }, [walletExists])
   const [importKey, setImportKey] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [createdAddress, setCreatedAddress] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [showReplaceWarning, setShowReplaceWarning] = useState(false)
 
   const handleUnlock = async () => {
     setLoading(true)
@@ -47,8 +53,20 @@ export default function WalletSetup({ walletExists, onCreate, onImport, onUnlock
     }
     setLoading(true)
     setError('')
-    await onImport(importKey.trim(), password)
+    try {
+      await onImport(importKey.trim(), password)
+    } catch {
+      setError('Failed to import wallet')
+    }
     setLoading(false)
+  }
+
+  const handleReplaceConfirm = () => {
+    setShowReplaceWarning(false)
+    setMode('import')
+    setPassword('')
+    setImportKey('')
+    setError('')
   }
 
   const copyAddress = async () => {
@@ -80,7 +98,7 @@ export default function WalletSetup({ walletExists, onCreate, onImport, onUnlock
       <h1>Ethcoin Miner</h1>
       <p className="subtitle">Set up your wallet to start mining</p>
 
-      {walletExists ? (
+      {walletExists && mode === 'unlock' ? (
         <div className="setup-form">
           <h2>Unlock Wallet</h2>
           <input
@@ -93,7 +111,7 @@ export default function WalletSetup({ walletExists, onCreate, onImport, onUnlock
           <button onClick={handleUnlock} disabled={loading}>
             {loading ? 'Unlocking...' : 'Unlock'}
           </button>
-          <p className="link" onClick={() => { setMode('import'); }}>
+          <p className="link" onClick={() => setShowReplaceWarning(true)}>
             Import a different wallet
           </p>
         </div>
@@ -108,6 +126,12 @@ export default function WalletSetup({ walletExists, onCreate, onImport, onUnlock
             </button>
           </div>
 
+          {walletExists && (
+            <div className="replace-warning-banner">
+              This will replace your existing wallet. Make sure you have backed up your private key.
+            </div>
+          )}
+
           {mode === 'create' && (
             <div className="setup-form">
               <input
@@ -119,6 +143,11 @@ export default function WalletSetup({ walletExists, onCreate, onImport, onUnlock
               <button onClick={handleCreate} disabled={loading}>
                 {loading ? 'Creating...' : 'Create Wallet'}
               </button>
+              {walletExists && (
+                <p className="link" onClick={() => { setMode('unlock'); setError(''); }}>
+                  Back to unlock
+                </p>
+              )}
             </div>
           )}
 
@@ -139,12 +168,40 @@ export default function WalletSetup({ walletExists, onCreate, onImport, onUnlock
               <button onClick={handleImport} disabled={loading}>
                 {loading ? 'Importing...' : 'Import Wallet'}
               </button>
+              {walletExists && (
+                <p className="link" onClick={() => { setMode('unlock'); setError(''); }}>
+                  Back to unlock
+                </p>
+              )}
             </div>
           )}
         </div>
       )}
 
       {error && <p className="error">{error}</p>}
+
+      {showReplaceWarning && (
+        <div className="modal-overlay" onClick={() => setShowReplaceWarning(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Replace Wallet?</h2>
+              <button className="modal-close" onClick={() => setShowReplaceWarning(false)}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <p className="replace-warning-text">
+                Creating or importing a new wallet will permanently replace your current wallet.
+                If you haven't backed up your private key, you will lose access to your funds.
+              </p>
+              <button className="btn-danger" onClick={handleReplaceConfirm}>
+                I've backed up my key, continue
+              </button>
+              <button onClick={() => setShowReplaceWarning(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
