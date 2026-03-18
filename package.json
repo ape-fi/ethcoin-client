@@ -2,6 +2,7 @@
   "name": "ethcoin-client",
   "version": "0.1.0",
   "description": "Ethcoin mining desktop application",
+  "author": "bamtheape",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
