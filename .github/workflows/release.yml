@@ -31,6 +31,19 @@ jobs:
 
       - run: npm test
 
+      - name: Convert icon to ICO for Windows
+        if: matrix.platform == 'win'
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.Drawing
+          $img = [System.Drawing.Image]::FromFile("$PWD\resources\icon.png")
+          $icon = [System.Drawing.Icon]::FromHandle($img.GetHicon())
+          $stream = [System.IO.File]::Create("$PWD\resources\icon.ico")
+          $icon.Save($stream)
+          $stream.Close()
+          $icon.Dispose()
+          $img.Dispose()
+
       - run: npx electron-vite build && npx electron-builder --publish never
 
       - uses: actions/upload-artifact@v4
