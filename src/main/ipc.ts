@@ -134,7 +134,7 @@ export function registerIpcHandlers(
 
   ipcMain.handle('settings:save', (_event, newSettings: Partial<Settings>) => {
     const settings = loadSettings()
-    if (newSettings.rpcUrl !== undefined) {
+    if (newSettings.rpcUrl !== undefined && newSettings.rpcUrl !== settings.rpcUrl) {
       settings.rpcUrl = newSettings.rpcUrl
       // Stop mining, kill old provider completely, reset references
       miningEngine?.stop()
