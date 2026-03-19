@@ -111,30 +111,32 @@ export default function App() {
     )
   }
 
-  if (showSettings) {
-    return <Settings onBack={() => setShowSettings(false)} onLock={() => { setShowSettings(false); refreshWallet(); }} />
-  }
-
   return (
     <div className="app">
       <UpdateBanner />
-      <header className="app-header">
-        <div className="header-left">
-          <h1>Ethcoin Miner</h1>
-          <span className="beta-badge">Beta v{APP_VERSION}</span>
-        </div>
-        <div className="header-right">
-          <span className="address">{walletStatus.address?.slice(0, 6)}...{walletStatus.address?.slice(-4)}</span>
-          <button className="btn-settings" onClick={() => setShowSettings(true)}>Settings</button>
-        </div>
-      </header>
-      <div className="dashboard">
-        <MiningStatus status={miningStatus} balances={balances} onStart={start} onStop={stop} />
-        <WalletInfo address={walletStatus.address!} balances={balances} onBalancesRefresh={refreshBalances} />
-        <MiningStats history={history} />
-        <NetworkStats stats={stats} />
-        <MiningHistory history={history} />
-      </div>
+      {showSettings ? (
+        <Settings onBack={() => setShowSettings(false)} onLock={() => { setShowSettings(false); refreshWallet(); }} />
+      ) : (
+        <>
+          <header className="app-header">
+            <div className="header-left">
+              <h1>Ethcoin Miner</h1>
+              <span className="beta-badge">Beta v{APP_VERSION}</span>
+            </div>
+            <div className="header-right">
+              <span className="address">{walletStatus.address?.slice(0, 6)}...{walletStatus.address?.slice(-4)}</span>
+              <button className="btn-settings" onClick={() => setShowSettings(true)}>Settings</button>
+            </div>
+          </header>
+          <div className="dashboard">
+            <MiningStatus status={miningStatus} balances={balances} onStart={start} onStop={stop} />
+            <WalletInfo address={walletStatus.address!} balances={balances} onBalancesRefresh={refreshBalances} />
+            <MiningStats history={history} />
+            <NetworkStats stats={stats} />
+            <MiningHistory history={history} />
+          </div>
+        </>
+      )}
     </div>
   )
 }

@@ -8,7 +8,7 @@ export function setupAutoUpdater(getWindow: () => BrowserWindow | null): void {
   let pendingUpdate: { version: string; releaseNotes?: string } | null = null
 
   autoUpdater.on('update-available', (info) => {
-    const update = { version: info.version, releaseNotes: info.releaseNotes }
+    const update = { version: info.version, releaseNotes: typeof info.releaseNotes === 'string' ? info.releaseNotes : undefined }
     pendingUpdate = update
     const win = getWindow()
     if (win && !win.webContents.isLoading()) {
