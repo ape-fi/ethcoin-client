@@ -87,7 +87,7 @@ app.whenReady().then(() => {
   registerIpcHandlers(walletManager, dataDir, () => mainWindow)
 
   ipcMain.handle('update:download', () => { downloadUpdate() })
-  ipcMain.handle('update:install', () => { installUpdate() })
+  ipcMain.handle('update:install', () => { installUpdate(app) })
   ipcMain.handle('shell:open-external', (_event, url: string) => shell.openExternal(url))
 
   createWindow()

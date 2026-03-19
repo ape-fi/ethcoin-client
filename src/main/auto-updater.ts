@@ -50,6 +50,7 @@ export function downloadUpdate(): void {
   autoUpdater.downloadUpdate().catch(() => {})
 }
 
-export function installUpdate(): void {
+export function installUpdate(app: import('electron').App): void {
+  (app as any).isQuitting = true
   autoUpdater.quitAndInstall()
 }
