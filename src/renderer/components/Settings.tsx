@@ -23,7 +23,7 @@ export default function Settings({ onBack, onLock }: Props) {
   }, [])
 
   const handleSave = async () => {
-    const gasVal = parseInt(maxGasGwei, 10)
+    const gasVal = parseFloat(maxGasGwei)
     await window.ethcoinAPI.saveSettings({
       rpcUrl: rpcUrl.trim(),
       maxGasGwei: isNaN(gasVal) || gasVal <= 0 ? 20 : gasVal
@@ -65,9 +65,9 @@ export default function Settings({ onBack, onLock }: Props) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <input
                 type="text"
-                inputMode="numeric"
+                inputMode="decimal"
                 value={maxGasGwei}
-                onChange={(e) => setMaxGasGwei(e.target.value.replace(/[^0-9]/g, ''))}
+                onChange={(e) => setMaxGasGwei(e.target.value.replace(/[^0-9.]/g, ''))}
                 placeholder="20"
                 style={{ flex: 1 }}
               />

@@ -51,6 +51,7 @@ describe('WalletManager', () => {
   })
 
   it('should import wallet from private key', async () => {
+    // Hardhat/Anvil default test key #0 — well-known public fixture, no real funds
     const testKey = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
     const address = await manager.importFromKey(testKey, 'password')
     expect(address).toMatch(/^0x[0-9a-fA-F]{40}$/)

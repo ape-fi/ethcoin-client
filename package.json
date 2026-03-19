@@ -1,6 +1,6 @@
 {
   "name": "ethcoin-client",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Ethcoin mining desktop application",
   "author": "bamtheape",
   "main": "./out/main/index.js",

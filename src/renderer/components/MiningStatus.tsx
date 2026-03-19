@@ -76,6 +76,14 @@ export default function MiningStatus({ status, balances, onStart, onStop }: Prop
         <span>{running ? 'Mining' : 'Stopped'}</span>
       </div>
 
+      {running && (
+        <div className="mining-wave">
+          {Array.from({ length: 12 }, (_, i) => (
+            <span key={i} className="wave-bar" style={{ animationDelay: `${i * 0.12}s` }} />
+          ))}
+        </div>
+      )}
+
       {status && (
         <div className="stats">
           {status.pendingTx && (
