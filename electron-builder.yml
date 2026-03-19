@@ -10,7 +10,7 @@ extraResources:
     to: icon.png
 publish:
   provider: github
-  owner: bamtheape
+  owner: ape-fi
   repo: ethcoin-client
 mac:
   target:
