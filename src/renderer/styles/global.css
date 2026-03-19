@@ -136,10 +136,13 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn-stop:hover { background: rgba(244, 112, 103, 0.1); }
 
 /* Wallet Info */
-.wallet-info .address-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; cursor: pointer; }
-.wallet-info .address-row:hover .copy-hint { opacity: 1; }
+.wallet-info .address-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.wallet-info .address.clickable { cursor: pointer; }
+.wallet-info .address.clickable:hover { text-decoration: underline; }
 .wallet-info .address { font-family: inherit; color: #8bba90; font-size: 14px; }
-.wallet-info .copy-hint { font-size: 11px; color: #484f58; opacity: 0; transition: opacity 0.15s; }
+.wallet-info .copy-hint { font-size: 11px; color: #484f58; }
+.wallet-info .etherscan-link { color: #484f58; cursor: pointer; display: flex; align-items: center; transition: color 0.15s; }
+.wallet-info .etherscan-link:hover { color: #8bba90; }
 .balances { display: flex; flex-direction: column; gap: 10px; }
 .balance { display: flex; justify-content: space-between; align-items: center; }
 .balance .label { color: #8b949e; font-size: 13px; }

@@ -78,9 +78,20 @@ export default function WalletInfo({ address, balances, onBalancesRefresh }: Pro
   return (
     <div className="panel wallet-info">
       <h2>Wallet</h2>
-      <div className="address-row" onClick={copyAddress}>
-        <span className="address">{address.slice(0, 6)}...{address.slice(-4)}</span>
+      <div className="address-row">
+        <span className="address clickable" onClick={copyAddress}>{address.slice(0, 6)}...{address.slice(-4)}</span>
         <span className="copy-hint">{copied ? 'Copied!' : 'Click to copy'}</span>
+        <a
+          className="etherscan-link"
+          title="View on Etherscan"
+          onClick={() => window.ethcoinAPI.openExternal(`https://etherscan.io/address/${address}`)}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+            <polyline points="15 3 21 3 21 9" />
+            <line x1="10" y1="14" x2="21" y2="3" />
+          </svg>
+        </a>
       </div>
       <div className="balances">
         <div className="balance">
