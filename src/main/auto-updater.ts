@@ -5,12 +5,17 @@ export function setupAutoUpdater(getWindow: () => BrowserWindow | null): void {
   autoUpdater.autoDownload = false
   autoUpdater.autoInstallOnAppQuit = true
 
+  let pendingUpdate: { version: string; releaseNotes?: string } | null = null
+
   autoUpdater.on('update-available', (info) => {
+    const update = { version: info.version, releaseNotes: info.releaseNotes }
+    pendingUpdate = update
     const win = getWindow()
-    if (win) {
-      win.webContents.send('update:available', {
-        version: info.version,
-        releaseNotes: info.releaseNotes
+    if (win && !win.webContents.isLoading()) {
+      win.webContents.send('update:available', update)
+    } else if (win) {
+      win.webContents.once('did-finish-load', () => {
+        win.webContents.send('update:available', update)
       })
     }
   })
