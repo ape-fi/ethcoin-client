@@ -5,6 +5,9 @@ directories:
   output: dist
 files:
   - out/**/*
+extraResources:
+  - from: resources/icon.png
+    to: icon.png
 publish:
   provider: github
   owner: bamtheape

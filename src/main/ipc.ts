@@ -1,7 +1,7 @@
 import { ipcMain, BrowserWindow, powerSaveBlocker } from 'electron'
 import { WalletManager } from './wallet-manager'
 import { ChainService } from './chain-service'
-import { MiningEngine } from './mining-engine'
+import type { MiningEngine as MiningEngineType } from './mining-engine'
 import { DEFAULT_RPC_URL } from '../shared/constants'
 import type { Settings, MiningResult } from '../shared/types'
 import { parseEther } from 'ethers'
@@ -9,7 +9,7 @@ import fs from 'fs'
 import path from 'path'
 
 let chainService: ChainService | null = null
-let miningEngine: MiningEngine | null = null
+let miningEngine: MiningEngineType | null = null
 let pollInterval: ReturnType<typeof setInterval> | null = null
 let powerBlockerId: number | null = null
 
@@ -259,6 +259,7 @@ export function registerIpcHandlers(
 
       const chain = getChainService()
       const connectedWallet = wallet.connect(chain.getProvider())
+      const { MiningEngine } = await import('./mining-engine')
       miningEngine = new MiningEngine(chain.getContract(), connectedWallet as any, chain.getProvider())
 
       const settings = loadSettings()

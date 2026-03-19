@@ -6,6 +6,10 @@ import { registerIpcHandlers } from './ipc'
 import { setupAutoUpdater, downloadUpdate, installUpdate } from './auto-updater'
 import { SENTRY_DSN, APP_VERSION } from '../shared/constants'
 
+const iconPath = app.isPackaged
+  ? path.join(process.resourcesPath, 'icon.png')
+  : path.join(__dirname, '../../resources/icon.png')
+
 if (SENTRY_DSN) {
   Sentry.init({
     dsn: SENTRY_DSN,
@@ -35,7 +39,7 @@ function createWindow(): void {
     height: 700,
     minWidth: 800,
     minHeight: 600,
-    icon: path.join(__dirname, '../../resources/icon.png'),
+    icon: iconPath,
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -59,7 +63,6 @@ function createWindow(): void {
 }
 
 function createTray(): void {
-  const iconPath = path.join(__dirname, '../../resources/icon.png')
   const icon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 })
   tray = new Tray(icon)
   tray.setToolTip('Ethcoin Miner')
@@ -76,7 +79,7 @@ function createTray(): void {
 
 app.whenReady().then(() => {
   if (process.platform === 'darwin') {
-    app.dock.setIcon(path.join(__dirname, '../../resources/icon.png'))
+    app.dock.setIcon(iconPath)
   }
   const dataDir = app.getPath('userData')
   const walletManager = new WalletManager(dataDir)
