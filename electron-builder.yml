@@ -1,5 +1,6 @@
 appId: com.ethcoin.miner
 productName: Ethcoin Miner
+artifactName: "Ethcoin-Miner-${version}-${arch}.${ext}"
 directories:
   buildResources: resources
   output: dist
