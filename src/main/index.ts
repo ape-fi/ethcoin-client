@@ -1,6 +1,8 @@
 import * as Sentry from '@sentry/electron/main'
 import { app, BrowserWindow, ipcMain, shell, Tray, Menu, nativeImage, powerMonitor } from 'electron'
 import path from 'path'
+import fs from 'fs'
+import crypto from 'crypto'
 import { WalletManager } from './wallet-manager'
 import { registerIpcHandlers } from './ipc'
 import { setupAutoUpdater, downloadUpdate, installUpdate } from './auto-updater'
@@ -10,11 +12,31 @@ const iconPath = app.isPackaged
   ? path.join(process.resourcesPath, 'icon.png')
   : path.join(__dirname, '../../resources/icon.png')
 
+function getAnonymousId(): string {
+  const idPath = path.join(app.getPath('userData'), '.anonymous-id')
+  try {
+    return fs.readFileSync(idPath, 'utf-8').trim()
+  } catch {
+    const id = crypto.randomUUID()
+    fs.mkdirSync(path.dirname(idPath), { recursive: true })
+    fs.writeFileSync(idPath, id)
+    return id
+  }
+}
+
 if (SENTRY_DSN) {
   Sentry.init({
     dsn: SENTRY_DSN,
     release: APP_VERSION,
     beforeSend(event) {
+      // Drop transient network errors — not actionable
+      const msg = event.exception?.values?.[0]?.value ?? ''
+      if (/ECONNRESET|ETIMEDOUT|ENOTFOUND|ENETUNREACH|fetch failed|code=TIMEOUT/i.test(msg)) {
+        return null
+      }
+      if (/dropped from mempool/i.test(msg)) {
+        event.level = 'warning'
+      }
       // Strip any potentially sensitive data from error messages
       if (event.exception?.values) {
         for (const ex of event.exception.values) {
@@ -28,6 +50,17 @@ if (SENTRY_DSN) {
       return event
     }
   })
+  Sentry.setUser({ id: getAnonymousId() })
+
+  // Daily launch ping for user counting
+  const pingPath = path.join(app.getPath('userData'), '.last-ping')
+  const today = new Date().toISOString().slice(0, 10)
+  try {
+    if (fs.readFileSync(pingPath, 'utf-8').trim() !== today) throw 0
+  } catch {
+    Sentry.captureMessage('app:launch', 'info')
+    fs.writeFileSync(pingPath, today)
+  }
 }
 
 let mainWindow: BrowserWindow | null = null
