@@ -196,12 +196,13 @@ export class MiningEngine {
             const totalPower = Number(await this.contract.totalMineCountOfBlock(activeBlock))
             const ourEntry = this.resultHistory.find(r => r.blockNumber === activeBlock)
             const ourPower = ourEntry?.mineCount ?? 0
-            power = totalPower === ourPower ? 1 : this.mineCount
+            // Only reduce to 1 if we actually mined and we're the sole miner
+            power = (ourPower > 0 && totalPower === ourPower) ? 1 : this.mineCount
           }
-          await this.mineOnce(power)
+          const result = await this.mineOnce(power)
           this.error = null
+          this.lastMinedBlock = result.blockNumber
           const newActiveBlock = await this.getActiveBlock()
-          this.lastMinedBlock = newActiveBlock
           this.lastSeenBlock = newActiveBlock
         } catch (error: any) {
           this.pendingTx = null
