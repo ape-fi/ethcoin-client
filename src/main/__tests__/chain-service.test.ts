@@ -24,7 +24,8 @@ vi.mock('ethers', () => {
     })
   }
   const mockProvider = {
-    destroy: vi.fn()
+    destroy: vi.fn(),
+    getFeeData: vi.fn().mockResolvedValue({ gasPrice: 1500000000n, maxFeePerGas: null })
   }
   let contractCallCount = 0
   return {
@@ -34,6 +35,7 @@ vi.mock('ethers', () => {
       return contractCallCount % 2 === 1 ? mockEthcoinContract : mockLensContract
     }),
     formatEther: vi.fn((val: bigint) => (Number(val) / 1e18).toString()),
+    formatUnits: vi.fn((val: bigint, unit: string) => unit === 'gwei' ? (Number(val) / 1e9).toString() : (Number(val) / 1e18).toString()),
     Network: { from: vi.fn(() => ({ name: 'mainnet', chainId: 1n })) }
   }
 })
@@ -52,6 +54,7 @@ describe('ChainService', () => {
     expect(stats.nextHalvingBlock).toBe(10080 - 43)
     expect(stats.totalTicketsInBlock).toBe(150)
     expect(stats.supplyPercent).toBe(38.1)
+    expect(stats.gasPrice).toBe('1.5')
   })
 
   it('should get user balances via lens', async () => {
