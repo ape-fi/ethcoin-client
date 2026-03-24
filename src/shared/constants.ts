@@ -1,4 +1,4 @@
-export const APP_VERSION = '0.1.7'
+export const APP_VERSION = '0.1.8'
 
 export const DISCLAIMER_TEXT = `This software is in beta and may contain bugs. You are solely responsible for your wallet, private keys, and funds. There is no way to recover lost private keys. The developers are not liable for any loss of funds, whether due to software bugs, user error, or any other cause. This is not financial advice. Mining does not guarantee returns.
 
