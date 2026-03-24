@@ -28,6 +28,10 @@ export default function NetworkStats({ stats }: Props) {
           <span className="value">{stats.supplyPercent.toFixed(2)}%</span>
         </div>
         <div className="stat">
+          <span className="label">Gas Price</span>
+          <span className="value">{parseFloat(stats.gasPrice).toFixed(2)} Gwei</span>
+        </div>
+        <div className="stat">
           <span className="label">Next Halving in</span>
           <span className="value">{stats.nextHalvingBlock} blocks</span>
         </div>

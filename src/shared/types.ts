@@ -35,6 +35,7 @@ export interface NetworkStats {
   totalTicketsInBlock: number
   nextHalvingBlock: number
   supplyPercent: number
+  gasPrice: string
 }
 
 export interface MiningHistoryEntry {

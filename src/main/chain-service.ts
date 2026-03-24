@@ -1,4 +1,4 @@
-import { JsonRpcProvider, Contract, formatEther, Network } from 'ethers'
+import { JsonRpcProvider, Contract, formatEther, formatUnits, Network } from 'ethers'
 import { ETHCOIN_CONTRACT_ADDRESS, ETHCOIN_ABI, ETHCOIN_LENS_ADDRESS, ETHCOIN_LENS_ABI, DEFAULT_RPC_URL } from '../shared/constants'
 import type { NetworkStats, Balances } from '../shared/types'
 
@@ -25,7 +25,10 @@ export class ChainService {
   }
 
   async getNetworkStats(): Promise<NetworkStats> {
-    const stats = await this.lens.getNetworkStats()
+    const [stats, feeData] = await Promise.all([
+      this.lens.getNetworkStats(),
+      this.provider.getFeeData()
+    ])
 
     const miningReward = stats[0]
     const blockNumber = Number(stats[1])
@@ -39,12 +42,15 @@ export class ChainService {
       ? Number((totalSupply * 1000000n) / maxSupply) / 10000
       : 0
 
+    const gasPrice = feeData.gasPrice ?? feeData.maxFeePerGas ?? 0n
+
     return {
       currentBlock: activeBlock,
       miningReward: formatEther(miningReward),
       totalTicketsInBlock: totalMiningPower,
       nextHalvingBlock: nextHalvingBlock - activeBlock,
-      supplyPercent
+      supplyPercent,
+      gasPrice: formatUnits(gasPrice, 'gwei')
     }
   }
 
