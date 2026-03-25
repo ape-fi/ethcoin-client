@@ -141,8 +141,12 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .wallet-info .address.clickable:hover { text-decoration: underline; }
 .wallet-info .address { font-family: inherit; color: #8bba90; font-size: 14px; }
 .wallet-info .copy-hint { font-size: 11px; color: #484f58; }
-.wallet-info .etherscan-link { color: #484f58; cursor: pointer; display: flex; align-items: center; transition: color 0.15s; }
-.wallet-info .etherscan-link:hover { color: #8bba90; }
+.wallet-info .etherscan-link, .wallet-info .qr-link { color: #484f58; cursor: pointer; display: flex; align-items: center; transition: color 0.15s; }
+.wallet-info .etherscan-link:hover, .wallet-info .qr-link:hover { color: #8bba90; }
+.qr-modal { max-width: 280px; }
+.qr-body { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.qr-image { width: 200px; height: 200px; border-radius: 4px; }
+.qr-address { font-size: 11px; color: #8b949e; word-break: break-all; text-align: center; line-height: 1.4; }
 .balances { display: flex; flex-direction: column; gap: 10px; }
 .balance { display: flex; justify-content: space-between; align-items: center; }
 .balance .label { color: #8b949e; font-size: 13px; }

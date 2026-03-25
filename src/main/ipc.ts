@@ -122,7 +122,7 @@ export function registerIpcHandlers(
       const wallet = walletManager.getWallet()
       if (!wallet) return { eth: '0', ethc: '0' }
       const chain = getChainService()
-      return chain.getUserBalances(wallet.address)
+      return await chain.getUserBalances(wallet.address)
     } catch {
       return { eth: '0', ethc: '0' }
     }
@@ -357,7 +357,7 @@ export function registerIpcHandlers(
   ipcMain.handle('chain:stats', async () => {
     try {
       const chain = getChainService()
-      return chain.getNetworkStats()
+      return await chain.getNetworkStats()
     } catch {
       return null
     }

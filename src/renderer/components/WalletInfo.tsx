@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import QRCode from 'qrcode'
 import type { Balances } from '../../shared/types'
 
 interface Props {
@@ -11,12 +12,19 @@ type SendToken = 'ETH' | 'ETHC'
 
 export default function WalletInfo({ address, balances, onBalancesRefresh }: Props) {
   const [copied, setCopied] = useState(false)
+  const [showQR, setShowQR] = useState(false)
+  const [qrDataUrl, setQrDataUrl] = useState('')
   const [sendToken, setSendToken] = useState<SendToken | null>(null)
   const [sendTo, setSendTo] = useState('')
   const [sendAmount, setSendAmount] = useState('')
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
   const [sendSuccess, setSendSuccess] = useState('')
+
+  useEffect(() => {
+    QRCode.toDataURL(address, { width: 200, margin: 2, color: { dark: '#c9d1d9', light: '#0d1117' } })
+      .then(setQrDataUrl)
+  }, [address])
 
   const copyAddress = async () => {
     await navigator.clipboard.writeText(address)
@@ -92,6 +100,24 @@ export default function WalletInfo({ address, balances, onBalancesRefresh }: Pro
             <line x1="10" y1="14" x2="21" y2="3" />
           </svg>
         </a>
+        <a
+          className="qr-link"
+          title="Show QR code"
+          onClick={() => setShowQR(true)}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="2" width="8" height="8" rx="1" />
+            <rect x="14" y="2" width="8" height="8" rx="1" />
+            <rect x="2" y="14" width="8" height="8" rx="1" />
+            <rect x="14" y="14" width="4" height="4" />
+            <line x1="22" y1="14" x2="22" y2="14.01" />
+            <line x1="22" y1="20" x2="22" y2="22" />
+            <line x1="18" y1="22" x2="22" y2="22" />
+            <line x1="14" y1="22" x2="14" y2="22.01" />
+            <line x1="14" y1="18" x2="14" y2="18.01" />
+            <line x1="18" y1="18" x2="22" y2="18" />
+          </svg>
+        </a>
       </div>
       <div className="balances">
         <div className="balance">
@@ -109,6 +135,22 @@ export default function WalletInfo({ address, balances, onBalancesRefresh }: Pro
           </div>
         </div>
       </div>
+
+      {showQR && (
+        <div className="modal-overlay" onClick={() => setShowQR(false)}>
+          <div className="modal qr-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Receive</h2>
+              <button className="modal-close" onClick={() => setShowQR(false)}>&times;</button>
+            </div>
+            <div className="modal-body qr-body">
+              {qrDataUrl && <img src={qrDataUrl} alt="Wallet QR Code" className="qr-image" />}
+              <span className="qr-address">{address}</span>
+              <button onClick={copyAddress}>{copied ? 'Copied!' : 'Copy Address'}</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {sendToken && (
         <div className="modal-overlay" onClick={closeSend}>
