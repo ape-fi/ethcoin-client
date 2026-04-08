@@ -162,10 +162,7 @@ export class MiningEngine {
   private async pollCycle(): Promise<void> {
     if (!this.running) return
     try {
-      const [activeBlock, lastBlockTime] = await Promise.all([
-        this.getActiveBlock(),
-        this.contract.lastBlockTime().then(Number)
-      ])
+      const activeBlock = await this.getActiveBlock()
 
       // First poll — just record current active block
       if (this.lastSeenBlock === -1) {
@@ -175,10 +172,8 @@ export class MiningEngine {
       }
 
       const isNewBlock = activeBlock > this.lastMinedBlock
-      const blockExpired = Math.floor(Date.now() / 1000) > lastBlockTime + 60
-      const alreadyMinedThisBlock = this.lastMinedBlock === activeBlock
 
-      if (!this.mining && (isNewBlock || (alreadyMinedThisBlock && blockExpired))) {
+      if (!this.mining && isNewBlock) {
         // Check gas price before mining
         const gasOk = await this.checkGasPrice()
         if (!gasOk) {
@@ -190,16 +185,7 @@ export class MiningEngine {
         this.lastSeenBlock = activeBlock
         this.mining = true
         try {
-          let power = this.mineCount
-          if (alreadyMinedThisBlock && blockExpired) {
-            // Block expired, we already mined into it. Check if we're the only miner.
-            const totalPower = Number(await this.contract.totalMineCountOfBlock(activeBlock))
-            const ourEntry = this.resultHistory.find(r => r.blockNumber === activeBlock)
-            const ourPower = ourEntry?.mineCount ?? 0
-            // Only reduce to 1 if we actually mined and we're the sole miner
-            power = (ourPower > 0 && totalPower === ourPower) ? 1 : this.mineCount
-          }
-          const result = await this.mineOnce(power)
+          const result = await this.mineOnce(this.mineCount)
           this.error = null
           this.lastMinedBlock = result.blockNumber
           const newActiveBlock = await this.getActiveBlock()
