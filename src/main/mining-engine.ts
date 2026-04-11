@@ -164,8 +164,22 @@ export class MiningEngine {
     try {
       const activeBlock = await this.getActiveBlock()
 
-      // First poll — just record current active block
+      // First poll — record the current active block and check whether this
+      // wallet already has an entry in it (e.g. from a previous engine
+      // instance before the user stopped/restarted mining or changed power).
+      // If so, mark it as already mined so we don't double-mine the block.
       if (this.lastSeenBlock === -1) {
+        try {
+          const filter = this.contract.filters.Mine(activeBlock, this.signer.address)
+          const latestEthBlock = await this.provider.getBlockNumber()
+          const fromBlock = Math.max(0, latestEthBlock - 1000)
+          const events = await this.contract.queryFilter(filter, fromBlock, latestEthBlock)
+          if (events.length > 0) {
+            this.lastMinedBlock = activeBlock
+          }
+        } catch (error) {
+          Sentry.captureException(error)
+        }
         this.lastSeenBlock = activeBlock
         this.emitStatus(activeBlock)
         return
